@@ -1,0 +1,23 @@
+name:                memento
+version:             0.1.0.0
+synopsis:            Do Stuff. Now. Please.
+license:             MIT
+license-file:        LICENSE
+author:              Alfredo Di Napoli
+maintainer:          alfredo.dinapoli@gmail.com
+category:            System
+build-type:          Simple
+-- extra-source-files:  
+cabal-version:       >= 1.14
+
+executable memento
+  main-is:
+          main/Main.hs
+  -- other-modules:       
+  -- other-extensions:    
+  build-depends:
+                base >= 4.6 && < 5
+              , iCalendar
+              , ansi-terminal
+  -- hs-source-dirs:      
+  default-language:    Haskell2010
