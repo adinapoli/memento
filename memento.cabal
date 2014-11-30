@@ -7,8 +7,28 @@ author:              Alfredo Di Napoli
 maintainer:          alfredo.dinapoli@gmail.com
 category:            System
 build-type:          Simple
--- extra-source-files:  
 cabal-version:       >= 1.14
+
+library
+  hs-source-dirs:
+    src
+  exposed-modules:
+    Memento.HipChat
+    Memento.GoogleCalendar
+
+  build-depends:
+      base >= 4.6 && < 5
+    , iCalendar
+    , ansi-terminal
+    , optparse-applicative >= 0.11.0
+    , http-client >= 0.3.8.2
+    , http-types
+    , data-default
+    , time
+    , text
+  default-language:    Haskell2010
+  default-extensions:
+    OverloadedStrings
 
 executable memento
   hs-source-dirs:
@@ -17,13 +37,14 @@ executable memento
     Main.hs
   other-modules:
     Memento.CLI
-  -- other-extensions:    
   build-depends:
-                base >= 4.6 && < 5
-              , iCalendar
-              , ansi-terminal
-              , optparse-applicative >= 0.11.0
-              , http-client >= 0.3.8.2
-              , data-default
-  -- hs-source-dirs:      
+      base
+    , iCalendar
+    , ansi-terminal
+    , optparse-applicative
+    , http-client
+    , http-types
+    , data-default
+    , time
+    , text
   default-language:    Haskell2010
