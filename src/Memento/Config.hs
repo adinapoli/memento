@@ -1,7 +1,11 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Memento.Config 
-  (checkConfig) where
+  ( userHomePath
+  , mementoCfgPath
+  , mementoCfgFolder
+  , checkConfig) where
 
+import Prelude hiding (FilePath)
 import Data.Char
 import Control.Monad
 import Data.Monoid
@@ -10,13 +14,24 @@ import Text.RawString.QQ
 import Memento.Logger
 import Shelly
 
+--------------------------------------------------------------------------------
+userHomePath :: IO T.Text
+userHomePath = shelly $ silently $ escaping False $ T.init <$> run "echo" ["$HOME"]
+
+--------------------------------------------------------------------------------
+mementoCfgFolder :: T.Text -> T.Text
+mementoCfgFolder home = home <> "/.memento"
+
+--------------------------------------------------------------------------------
+mementoCfgPath :: T.Text -> T.Text
+mementoCfgPath home = mementoCfgFolder home <> "/memento.cfg"
 
 --------------------------------------------------------------------------------
 checkConfig :: IO ()
 checkConfig = shelly $ silently $ escaping False $ do
-  homePath <- T.init <$> run "echo" ["$HOME"]
-  let cfgFolder = fromText $ homePath <> "/.memento"
-  let cfgPath = cfgFolder </> (fromText "memento.cfg")
+  home <- liftIO userHomePath
+  let cfgFolder = fromText $ mementoCfgFolder home
+  let cfgPath = fromText $ mementoCfgPath home
   cfgInMemPath <- test_f cfgPath
   unless cfgInMemPath $ do
     liftIO $ do

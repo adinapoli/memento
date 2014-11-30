@@ -11,13 +11,14 @@ import Data.Aeson.TH
 import Control.Monad
 import Network.HTTP.Client
 import Network.HTTP.Types
+import Memento.Types
 import qualified Data.Aeson as JSON
 
 -- | Simple HipChat notifier module for Memento.
 
 --------------------------------------------------------------------------------
-apiToken :: Text
-apiToken = mempty
+apiToken_ :: Memento T.Text
+apiToken_ = requireEnv "memento.hipchat.apiToken"
 
 --------------------------------------------------------------------------------
 data HCRoom =
@@ -27,7 +28,8 @@ data HCRoom =
 --------------------------------------------------------------------------------
 data HCColour = HC_Purple deriving (Show, Eq)
 
-deriveJSON defaultOptions ''HCColour
+instance JSON.ToJSON HCColour where
+  toJSON HC_Purple = JSON.String "purple"
 
 --------------------------------------------------------------------------------
 data HCPayload = HCPayload {
@@ -39,7 +41,7 @@ data HCPayload = HCPayload {
 instance Default HCPayload where
     def = HCPayload HC_Purple mempty True
 
-deriveJSON defaultOptions ''HCPayload
+deriveToJSON defaultOptions ''HCPayload
 
 
 --------------------------------------------------------------------------------
@@ -49,13 +51,16 @@ renderRoom Releases = "Releases"
 
 --------------------------------------------------------------------------------
 apiUrl :: Text
-apiUrl = "https://api.hipchat.com"
+apiUrl = "http://api.hipchat.com"
 
 --------------------------------------------------------------------------------
 -- | Notify something inside HipChat
-notifyRoom :: HCRoom -> Text -> IO ()
+notifyRoom :: HCRoom -> Text -> Memento ()
 notifyRoom room msg = do
-  rq' <- parseUrl $ T.unpack $ apiUrl <> "/v2/room/" <> renderRoom room <> "/notification"
+  apiToken <- apiToken_
+  rq' <- liftIO $ parseUrl $ T.unpack $ apiUrl <> "/v2/room/"
+                                               <> renderRoom room
+                                               <> "/notification"
   let headers = [(hContentType, "application/json")
               ,(hUserAgent, "memento/0.0.0")
               ,(hAuthorization, "Bearer " <> TE.encodeUtf8 apiToken)]
@@ -64,6 +69,5 @@ notifyRoom room msg = do
         method = "POST"
       , requestHeaders = headers
       , requestBody = RequestBodyLBS jsonBody
-      , secure = True
       }
-  void $ withManager defaultManagerSettings $ httpLbs rq
+  void $ liftIO $ withManager defaultManagerSettings $ httpLbs rq

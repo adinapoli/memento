@@ -17,10 +17,12 @@ library
     Memento.Logger
     Memento.HipChat
     Memento.GoogleCalendar
+    Memento.Types
 
   build-depends:
       base >= 4.6 && < 5
     , aeson >= 0.7.0.0
+    , configurator
     , iCalendar
     , ansi-terminal
     , optparse-applicative >= 0.11.0
@@ -30,6 +32,7 @@ library
     , data-default
     , raw-strings-qq
     , shelly >= 1.5.0.0
+    , mtl
     , time
     , text
     , configurator
