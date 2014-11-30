@@ -15,9 +15,8 @@ calendarId :: Text
 calendarId = "irisconnect.co.uk_gu08qbqf9githq086f405oe3po%40group.calendar.google.com"
 
 --------------------------------------------------------------------------------
--- SUPER TEMP - Do not commit!
 calendarToken :: Text
-calendarToken = "AIzaSyAXe0JMfWpmkoIoB5DNwzyfM-7aXZagPPw"
+calendarToken = _
 
 --------------------------------------------------------------------------------
 calendarAPI :: Text

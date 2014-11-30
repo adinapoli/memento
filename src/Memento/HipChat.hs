@@ -10,11 +10,9 @@ import qualified Data.Aeson as JSON
 
 -- | Simple HipChat notifier module for Memento.
 
-
 --------------------------------------------------------------------------------
--- SUPER TEMPORARY - DO not commit, put inside a cfg file.
 apiToken :: Text
-apiToken = "cf8192c7ae82fd06a82c7e9f121145"
+apiToken = _
 
 --------------------------------------------------------------------------------
 data HCRoom =
