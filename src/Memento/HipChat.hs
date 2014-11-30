@@ -1,9 +1,14 @@
-
+{-# LANGUAGE TemplateHaskell #-}
 module Memento.HipChat where
 
 import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import Data.Default
 import Data.Monoid
+import qualified Data.Aeson as JSON
+import Data.Aeson.TH
+import Control.Monad
 import Network.HTTP.Client
 import Network.HTTP.Types
 import qualified Data.Aeson as JSON
@@ -12,7 +17,7 @@ import qualified Data.Aeson as JSON
 
 --------------------------------------------------------------------------------
 apiToken :: Text
-apiToken = _
+apiToken = mempty
 
 --------------------------------------------------------------------------------
 data HCRoom =
@@ -20,17 +25,21 @@ data HCRoom =
     | Releases deriving (Show, Eq)
 
 --------------------------------------------------------------------------------
+data HCColour = HC_Purple deriving (Show, Eq)
+
+deriveJSON defaultOptions ''HCColour
+
+--------------------------------------------------------------------------------
 data HCPayload = HCPayload {
         color :: HCColour
       , message :: Text
-      , notify :: Boolean
+      , notify :: Bool
       }
-
-data HCColour = HC_Purple deriving (Show, Eq)
-
 
 instance Default HCPayload where
     def = HCPayload HC_Purple mempty True
+
+deriveJSON defaultOptions ''HCPayload
 
 
 --------------------------------------------------------------------------------
@@ -44,21 +53,17 @@ apiUrl = "https://api.hipchat.com"
 
 --------------------------------------------------------------------------------
 -- | Notify something inside HipChat
-notify :: HCRoom -> Text -> IO ()
-notify room msg = do
+notifyRoom :: HCRoom -> Text -> IO ()
+notifyRoom room msg = do
   rq' <- parseUrl $ T.unpack $ apiUrl <> "/v2/room/" <> renderRoom room <> "/notification"
   let headers = [(hContentType, "application/json")
               ,(hUserAgent, "memento/0.0.0")
-              ,(hAuthorization, "Bearer " <> apiToken)]
+              ,(hAuthorization, "Bearer " <> TE.encodeUtf8 apiToken)]
   let jsonBody = JSON.encode $ def { message = msg }
-  let rq = def {
+  let rq = rq' {
         method = "POST"
       , requestHeaders = headers
-      , requestBody = RequestBodyBS jsonBody
+      , requestBody = RequestBodyLBS jsonBody
       , secure = True
       }
-  void $ withManager $ httpLbs rq
-
---------------------------------------------------------------------------------
-updateStatus :: HCStatus -> IO ()
-updateStatus _ = _
+  void $ withManager defaultManagerSettings $ httpLbs rq

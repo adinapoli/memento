@@ -13,17 +13,23 @@ library
   hs-source-dirs:
     src
   exposed-modules:
+    Memento.Config
+    Memento.Logger
     Memento.HipChat
     Memento.GoogleCalendar
 
   build-depends:
       base >= 4.6 && < 5
+    , aeson >= 0.7.0.0
     , iCalendar
     , ansi-terminal
     , optparse-applicative >= 0.11.0
+    , old-locale
     , http-client >= 0.3.8.2
     , http-types
     , data-default
+    , raw-strings-qq
+    , shelly >= 1.5.0.0
     , time
     , text
     , configurator
@@ -40,6 +46,7 @@ executable memento
     Memento.CLI
   build-depends:
       base
+    , memento
     , iCalendar
     , ansi-terminal
     , optparse-applicative
@@ -49,3 +56,5 @@ executable memento
     , time
     , text
   default-language:    Haskell2010
+  default-extensions:
+    OverloadedStrings

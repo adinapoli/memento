@@ -4,10 +4,17 @@ module Memento.GoogleCalendar
     ( newHangoutLink
     ) where
 
-import Data.Text
+import Control.Applicative
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import qualified Data.Aeson as JSON
 import Data.Aeson.TH
-import Date.Time
+import Data.Monoid
+import Data.Time
+import System.Locale
+import Network.HTTP.Types
+import Network.HTTP.Client
 
 --------------------------------------------------------------------------------
 -- "mytest" calendar
@@ -16,14 +23,14 @@ calendarId = "irisconnect.co.uk_gu08qbqf9githq086f405oe3po%40group.calendar.goog
 
 --------------------------------------------------------------------------------
 calendarToken :: Text
-calendarToken = _
+calendarToken = mempty
 
 --------------------------------------------------------------------------------
 calendarAPI :: Text
 calendarAPI = "https://www.googleapis.com/calendar/v3/calendars/"
 
 --------------------------------------------------------------------------------
-newtype GoogleDate = GoogleDate { date :: UTCTime } deriving (Show, Eq)
+newtype GoogleDate = GoogleDate { date :: Text } deriving (Show, Eq)
 
 deriveToJSON defaultOptions ''GoogleDate
 
@@ -39,6 +46,7 @@ data CalendarEventReq = CalendarEventReq {
 
 deriveToJSON defaultOptions ''CalendarEventReq
 
+--------------------------------------------------------------------------------
 data CalendarEvent = CalendarEvent {
         ce_id :: Text
       , ce_hangoutLink :: Text
@@ -47,28 +55,39 @@ data CalendarEvent = CalendarEvent {
       } deriving (Show, Eq)
 
 
-deriveFromJSON defaultOptions { labelFieldModifier = drop 3 } ''CalendarEvent
+deriveFromJSON defaultOptions { fieldLabelModifier = drop 3 } ''CalendarEvent
 
 --------------------------------------------------------------------------------
 -- | Insert a new event inside the given calendar.
 newEvent :: CalendarId -> CalendarEventReq -> IO (Either String CalendarEvent)
 newEvent cId cev@CalendarEventReq{..}= do
-  rq' <- parseUrl $ T.unpack $ calendarAPI <> "/events"
+  rq' <- parseUrl $ T.unpack $ calendarAPI <> cId <> "/events"
   let headers = [(hContentType, "application/json")
                ,(hUserAgent, "memento/0.0.0")
-               ,(hAuthorization, "Bearer " <> calendarToken)]
-  let jsonBody = JSON.encode $ def { message = msg }
-  let rq = def {
+               ,(hAuthorization, "Bearer " <> TE.encodeUtf8 calendarToken)]
+  let jsonBody = JSON.encode cev
+  let rq = rq' {
         method = "POST"
       , requestHeaders = headers
-      , requestBody = RequestBodyBS jsonBody
+      , requestBody = RequestBodyLBS jsonBody
       , secure = True
       }
-  res <- withManager $ httpLbs rq
+  res <- responseBody <$> (withManager defaultManagerSettings (httpLbs rq))
   return $ JSON.eitherDecode res
+
+--------------------------------------------------------------------------------
+newCalendarEvtRq :: Text -> IO CalendarEventReq
+newCalendarEvtRq title = do
+  now <- getCurrentTime
+  let googleAcceptedDate = formatTime defaultTimeLocale "%F" now
+  return $ CalendarEventReq {
+        summary = title
+      , start   = GoogleDate $ T.pack googleAcceptedDate
+      , end     = GoogleDate $ T.pack googleAcceptedDate
+      }
 
 --------------------------------------------------------------------------------
 newHangoutLink :: Text -> IO (Either String Text)
 newHangoutLink title = do
   req <- newCalendarEvtRq title
-  newEvent calendarId req >>= either id ce_hangoutLink
+  newEvent calendarId req >>= return . either Left (Right . ce_hangoutLink)
