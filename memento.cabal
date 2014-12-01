@@ -48,6 +48,7 @@ executable memento
     Main.hs
   other-modules:
     Memento.CLI
+    Memento.Commands
   build-depends:
       base
     , memento
