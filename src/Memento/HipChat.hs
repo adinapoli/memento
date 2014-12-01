@@ -37,10 +37,11 @@ data HCPayload = HCPayload {
         color :: HCColour
       , message :: Text
       , notify :: Bool
+      , message_format :: Text
       }
 
 instance Default HCPayload where
-    def = HCPayload HC_Purple mempty True
+    def = HCPayload HC_Purple mempty True "text"
 
 deriveToJSON defaultOptions ''HCPayload
 
