@@ -46,11 +46,11 @@ requireEnv key = do
   liftIO $ Cfg.require (config env) key
 
 --------------------------------------------------------------------------------
-runMemento :: MementoEnv -> Memento () -> IO ()
+runMemento :: MementoEnv -> Memento a -> IO a
 runMemento env action = flip evalStateT env $ unMemento action
 
 --------------------------------------------------------------------------------
-startMemento :: Memento () -> IO ()
+startMemento :: Memento a -> IO a
 startMemento action = do
   env <- newMementoEnv
   runMemento env action

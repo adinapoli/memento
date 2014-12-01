@@ -22,7 +22,8 @@ apiToken_ = requireEnv "memento.hipchat.apiToken"
 
 --------------------------------------------------------------------------------
 data HCRoom =
-      Dev
+      Development
+    | DevChat
     | Releases deriving (Show, Eq)
 
 --------------------------------------------------------------------------------
@@ -46,7 +47,8 @@ deriveToJSON defaultOptions ''HCPayload
 
 --------------------------------------------------------------------------------
 renderRoom :: HCRoom -> Text
-renderRoom Dev = "Development"
+renderRoom Development = "Development"
+renderRoom DevChat = "dev-chat"
 renderRoom Releases = "Releases"
 
 --------------------------------------------------------------------------------

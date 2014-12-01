@@ -15,15 +15,16 @@ import Data.Time
 import System.Locale
 import Network.HTTP.Types
 import Network.HTTP.Client
+import Network.HTTP.Client.TLS
+import Memento.Types
 
 --------------------------------------------------------------------------------
--- "mytest" calendar
-calendarId :: Text
-calendarId = "irisconnect.co.uk_gu08qbqf9githq086f405oe3po%40group.calendar.google.com"
+calendarId_ :: Memento Text
+calendarId_ = requireEnv "memento.google.calendarId"
 
 --------------------------------------------------------------------------------
-calendarToken :: Text
-calendarToken = mempty
+calendarToken_ :: Memento Text
+calendarToken_ = requireEnv "memento.google.apiToken"
 
 --------------------------------------------------------------------------------
 calendarAPI :: Text
@@ -59,9 +60,10 @@ deriveFromJSON defaultOptions { fieldLabelModifier = drop 3 } ''CalendarEvent
 
 --------------------------------------------------------------------------------
 -- | Insert a new event inside the given calendar.
-newEvent :: CalendarId -> CalendarEventReq -> IO (Either String CalendarEvent)
+newEvent :: CalendarId -> CalendarEventReq -> Memento (Either String CalendarEvent)
 newEvent cId cev@CalendarEventReq{..}= do
-  rq' <- parseUrl $ T.unpack $ calendarAPI <> cId <> "/events"
+  rq' <- liftIO $ parseUrl $ T.unpack $ calendarAPI <> cId <> "/events"
+  calendarToken <- calendarToken_
   let headers = [(hContentType, "application/json")
                ,(hUserAgent, "memento/0.0.0")
                ,(hAuthorization, "Bearer " <> TE.encodeUtf8 calendarToken)]
@@ -70,15 +72,14 @@ newEvent cId cev@CalendarEventReq{..}= do
         method = "POST"
       , requestHeaders = headers
       , requestBody = RequestBodyLBS jsonBody
-      , secure = True
       }
-  res <- responseBody <$> (withManager defaultManagerSettings (httpLbs rq))
+  res <- responseBody <$> liftIO (withManager tlsManagerSettings (httpLbs rq))
   return $ JSON.eitherDecode res
 
 --------------------------------------------------------------------------------
-newCalendarEvtRq :: Text -> IO CalendarEventReq
+newCalendarEvtRq :: Text -> Memento CalendarEventReq
 newCalendarEvtRq title = do
-  now <- getCurrentTime
+  now <- liftIO getCurrentTime
   let googleAcceptedDate = formatTime defaultTimeLocale "%F" now
   return $ CalendarEventReq {
         summary = title
@@ -87,7 +88,8 @@ newCalendarEvtRq title = do
       }
 
 --------------------------------------------------------------------------------
-newHangoutLink :: Text -> IO (Either String Text)
+newHangoutLink :: Text -> Memento (Either String Text)
 newHangoutLink title = do
   req <- newCalendarEvtRq title
+  calendarId <- calendarId_
   newEvent calendarId req >>= return . either Left (Right . ce_hangoutLink)

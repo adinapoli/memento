@@ -29,6 +29,7 @@ library
     , old-locale
     , http-client >= 0.3.8.2
     , http-types
+    , http-client-tls >= 0.2.2
     , data-default
     , raw-strings-qq
     , shelly >= 1.5.0.0
